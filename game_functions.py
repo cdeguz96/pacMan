@@ -1,13 +1,14 @@
 import sys
 import pygame as pg
 from vector import Vector
-from math import fabs
+from math import fabs, pi, cos, sin
 
 swapped = False
 li = [pg.K_RIGHT, pg.K_LEFT, pg.K_UP, pg.K_DOWN]
 di = {pg.K_RIGHT : Vector(1, 0), pg.K_LEFT : Vector(-1, 0),
       pg.K_UP : Vector(0, -1), pg.K_DOWN : Vector(0, 1)}
 epsilon = 0.0001
+
 
 def compare(a, b): return fabs(a - b) < epsilon
 
@@ -20,22 +21,12 @@ def check_keydown_events(event, character):
             if compare(v.dot(new_dir), -1):
                 c.reverse()
             return
-        # choose next star for destination
-        v = di[event.key]
-        delta = (v.x if v.y == 0 else -11 * v.y)      # -1 left, +1 right, +10 up, -10 down
-        grid_pt = c.grid_pt   # current grid point -- where to go next ?
-        idx = grid_pt.index
-        possible_idx = idx + int(delta)
-        print(f'poss_idx {possible_idx} -- Choosing from adj_list for index {c.grid_pt.index} is {c.grid_pt.adj_list}')
-        if possible_idx in grid_pt.adj_list:
-            # c.grid_pt_next = possible_idx
-            c.grid_pt_prev.make_normal()
 
-            c.grid_pt_next = c.to_grid(possible_idx)
-            c.grid_pt_prev = grid_pt
-            c.update_next_prev()
+        # choose next star for destination
         c.v = di[event.key]
-        c.scale_factor = 1.0
+        c.choose_next()
+        # c.v = di[event.key]
+        c.scale_factor = c.default_scale_factor
         c.update_angle()
 
 def check_keyup_events(event, character):

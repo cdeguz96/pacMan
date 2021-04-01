@@ -22,7 +22,7 @@ def TR(n):  return helper(n, [n - COLUMNS, n - 1, n + COLUMNS])
 def TUD(n): return helper(n, [n - 1, n + 1, n + COLUMNS])
 
 def cross(n):  return helper(n, [n - COLUMNS, n - 1, n + 1, n + COLUMNS])
-def wrapL(n):  return helper(n, [n + 1, n + COLUMNS])
+def wrapL(n):  return helper(n, [n + 1, n + COLUMNS - 1])
 def wrapR(n):  return helper(n, [n - 1,  n - COLUMNS])
 def Lonly(n):  return helper(n, [n - 1])
 def Ronly(n):  return helper(n, [n + 1])
