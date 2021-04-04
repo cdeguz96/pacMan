@@ -163,31 +163,71 @@ class GridPoint:
     imagev3 = pg.transform.rotozoom(imagev0, 0, 1.3)
     imagesv = [imagev0, imagev1, imagev2, imagev3, imagev2, imagev1]
 
+    imagePortal = pg.image.load('images/portal_green_trim.png')
+    imagePortal1 = pg.transform.rotozoom(imagePortal, -8, .1)
+    imagePortal2 = pg.transform.rotozoom(imagePortal, -6, .1)
+    imagePortal3 = pg.transform.rotozoom(imagePortal, -4, .1)
+    imagePortal4 = pg.transform.rotozoom(imagePortal, -2, .1)
+    imagePortal5 = pg.transform.rotozoom(imagePortal, 0, .1)
+    imagePortal6 = pg.transform.rotozoom(imagePortal, 2, .1)
+    imagePortal7 = pg.transform.rotozoom(imagePortal, 4, .1)
+    imagePortal8 = pg.transform.rotozoom(imagePortal, 6, .1)
+    imagePortal9 = pg.transform.rotozoom(imagePortal, 8, .1)
+    imagePortals = [imagePortal1, imagePortal2, imagePortal3, imagePortal4, imagePortal5, imagePortal6,
+                    imagePortal7, imagePortal8, imagePortal9]
 
-    def __init__(self, game, pt=Vector(70,931), index=0, adj_list=[]):
+    imagePowerPill = pg.transform.rotozoom(pg.image.load('images/powerPill.png'), 0, .25)
+
+    def __init__(self, game, pt=Vector(70,931), type = None, index=0, adj_list=[]):
         self.game = game
         self.screen = game.screen
         self.pt = pt
         self.index = index
         self.adj_list = adj_list
-        self.timer_normal = Timer(GridPoint.images, wait=100)
-        self.timer_visited = Timer(GridPoint.imagesv, wait=100)
-        self.timer_next = Timer(GridPoint.imagesn, wait=100)
-        self.timer_prev = Timer(GridPoint.imagesp, wait=100)
-        self.timer = self.timer_normal
+        # self.timer_normal = Timer(GridPoint.images, wait=100)
+        # self.timer_visited = Timer(GridPoint.imagesv, wait=100)
+        # self.timer_next = Timer(GridPoint.imagesn, wait=100)
+        # self.timer_prev = Timer(GridPoint.imagesp, wait=100)
+        # self.timer = self.timer_normal
+        self.timer = Timer(GridPoint.images, wait=100)
+
+        self.eaten = False
+        self.portal = False
+        self.timer_portal = Timer(GridPoint.imagePortals, oscillating=True)
+
+        if self.index in [0, 10, 99, 109]: self.type = "power"
+        elif self.index in [55, 65]: self.type = "portal"
+        else: self.type = "point"
+
 
     def update(self): self.draw()
 
-    def make_next(self): self.timer = self.timer_next
+    # def make_next(self): self.timer = self.timer_next
 
-    def make_prev(self): self.timer = self.timer_prev
+    # def make_prev(self): self.timer = self.timer_prev
 
     def make_normal(self): pass    #  self.timer = self.timer_normal
 
-    def make_visited(self): self.timer = self.timer_visited
+    # def make_visited(self):
+    #     self.timer = self.timer_visited
 
     def draw(self):
-        image = self.timer.imagerect()
-        rect = image.get_rect()
-        rect.centerx, rect.centery = self.pt.x, self.pt.y
-        self.screen.blit(image, rect)
+        if not self.eaten and self.adj_list:
+            if self.type == "portal":
+                image = self.timer_portal.imagerect()
+                rect = image.get_rect()
+                rect.centerx, rect.centery = self.pt.x, self.pt.y + 7
+                self.screen.blit(image, rect)
+                return
+            elif self.type == "power":
+                image = GridPoint.imagePowerPill
+                rect = image.get_rect()
+                rect.centerx, rect.centery = self.pt.x, self.pt.y
+                self.screen.blit(image, rect)
+                return
+            else:
+                image = self.timer.imagerect()
+                rect = image.get_rect()
+                rect.centerx, rect.centery = self.pt.x, self.pt.y
+                self.screen.blit(image, rect)
+                return

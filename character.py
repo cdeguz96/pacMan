@@ -1,4 +1,5 @@
 import pygame as pg
+import game_functions as gf
 from math import atan2, pi, sin, cos, radians
 from vector import Vector
 from copy import copy
@@ -21,10 +22,11 @@ class Character:
         self.rect = None
         self.grid_pt, self.grid_pt_next = grid_pt, grid_pt_next
         self.grid_pt_prev = self.grid_pt
-        self.update_next_prev()
+        # self.update_next_prev()
         # self.choose_next()
         self.pt = copy(self.grid_pt.pt)
         self.location_displayed = False
+        self.momentum = False
 
     def clamp(self):
         screen = self.screen_rect
@@ -36,8 +38,8 @@ class Character:
             self.grid_pt = self.grid_pt_next
             # self.choose_next()
             self.pt = self.grid_pt.pt
-            self.v = Vector(1, 0)
-            self.update_next_prev()
+            # self.v = Vector(1, 0)
+            # self.update_next_prev()
 
 
     def enterPortal(self): pass
@@ -53,14 +55,18 @@ class Character:
                 # print(f'AT DEST {self.grid_pt.index} delta is {delta} pt is {self.pt}, '
                 #       f'next is {self.grid_pt_next.pt} with adj_list {self.grid_pt.adj_list}')
                 self.location_displayed = True
+            # if self.name == "Pacman":
+            #     Pacman.eat_point(self)
+
             return True
+
         return False
 
     def at_source(self):
         delta = (self.pt - self.grid_pt_next.pt).magnitude()
         if delta < 2 and delta > 0.1:
             self.pt = self.grid_pt_next.pt
-            print(f'AT SOURCE {self.grid_pt.index} with adj_list {self.grid_pt.adj_list}')
+            # print(f'AT SOURCE {self.grid_pt.index} with adj_list {self.grid_pt.adj_list}')
             return True
         return False
 
@@ -72,20 +78,19 @@ class Character:
     def to_grid(self, index):
         return self.game.to_grid(index)
 
-    def update_next_prev(self):
-        self.grid_pt_next.make_next()
-        self.grid_pt_prev.make_visited()
+    # def update_next_prev(self):
+    #     self.grid_pt_next.make_next()
+    #     self.grid_pt_prev.make_visited()
 
     def reverse(self):
         temp = self.grid_pt_prev
         self.grid_pt_prev = self.grid_pt_next
         self.grid_pt_next = temp
 
-        self.grid_pt_prev.make_prev()
-        self.grid_pt_next.make_next()
+        # self.grid_pt_prev.make_prev()
+        # self.grid_pt_next.make_next()
 
         self.v *= -1
-        self.scale_factor = 1
         self.update_angle()
 
     def angle(self):
@@ -96,23 +101,23 @@ class Character:
         grid_pt = self.grid_pt   # current grid point -- where to go next ?
         idx = grid_pt.index
         possible_idx = idx + int(delta)
-        if type(self) == 'Pacman':
-            print(f'poss_idx {possible_idx} -- Choosing from adj_list for index {self.grid_pt.index} \
-                  is {self.grid_pt.adj_list}')
-        if idx == 63 or idx == 64:
-            print(f"WARNING -- LEAVING GRID possible_idx is {possible_idx}")
+        # if type(self) == 'Pacman':
+        #     print(f'poss_idx {possible_idx} -- Choosing from adj_list for index {self.grid_pt.index} \
+        #           is {self.grid_pt.adj_list}')
+        # if idx == 63 or idx == 64:
+        #     print(f"WARNING -- LEAVING GRID possible_idx is {possible_idx}")
 
         if possible_idx in grid_pt.adj_list:
             self.grid_pt_prev = grid_pt
-            self.grid_pt_prev.make_normal()
+            # self.grid_pt_prev.make_normal()
             idx = self.grid_pt.index
-            if possible_idx == 53 or possible_idx == 65:
-                print("WARNING -- LEAVING GRID")
-            if possible_idx == 65: possible_idx = 55
-            if possible_idx == 53: possible_idx = 61
+            # if possible_idx == 53 or possible_idx == 65:
+            #     print("WARNING -- LEAVING GRID")
+            if possible_idx == 65: possible_idx = 56
+            if possible_idx == 55: possible_idx = 64
             self.grid_pt_next = self.to_grid(possible_idx)
 
-            self.update_next_prev()
+            # self.update_next_prev()
             return True
         return False
 
@@ -121,7 +126,7 @@ class Character:
     def update_angle(self):
         curr_angle = self.angle()
         delta_angle = curr_angle - self.prev_angle
-        print(f'ANGLE IS NOW: {curr_angle}')
+        # print(f'ANGLE IS NOW: {curr_angle}')
         # self.image = pg.transform.rotozoom(self.image, delta_angle, 1.0)
         self.image = pg.transform.rotozoom(self.origimage, curr_angle - 90.0, self.scale)
         self.prev_angle = curr_angle
@@ -136,31 +141,73 @@ class Pacman(Character):
     def __init__(self, game, v=Vector(-1, 0), grid_pt=None):
         super().__init__(game=game, v=v, name="Pacman", scale=0.55, grid_pt=game.maze.location(2, 5),
                          grid_pt_next=game.maze.location(2, 4), scale_factor=3)
-        self.image = pg.image.load('images/ship.bmp')
+        self.image = self.images_pman[0] #pg.image.load('images/ship.bmp')
         self.origimage = self.image
         self.prev_angle = 90.0
         self.scale = 0.8
         curr_angle = self.angle()
         delta_angle = curr_angle - self.prev_angle
         self.prev_angle = curr_angle
-        print(f'>>>>>>>>>>>>>>>>>>>>>>>> PREV ANGLE is {self.prev_angle}')
+        # print(f'>>>>>>>>>>>>>>>>>>>>>>>> PREV ANGLE is {self.prev_angle}')
         self.last_posn = self.grid_pt
-        if self.grid_pt_prev is None: print("PT_PREV IS NONE")
+        # if self.grid_pt_prev is None: print("PT_PREV IS NONE")
         self.image = pg.transform.rotozoom(self.image, delta_angle, self.scale)
         self.rect = self.image.get_rect()
         self.rect.centerx, self.rect.centery = self.pt.x, self.pt.y
-        self.location_displayed = False
+        # self.location_displayed = False
         self.timer = Timer(Pacman.images_pman, wait=20, oscillating=True)
-        self.version = 0
-        self.step = 1
+        # self.version = 0
+        # self.step = 1
+        # self.power = False
 
-    def kill_ghost(self): pass
-    def eat_point(self): pass
+    def check_ghost_collisions(self, ghost):
+        if self.rect.colliderect(ghost.rect):
+            if self.game.ghostsRunning:
+                self.kill_ghost(ghost)
+            else:
+                ghost.kill_pacman()
+
+    def check_item_collision(self, grid_pt):
+        if grid_pt.eaten: return
+        if self.rect.collidepoint(grid_pt.pt.x, grid_pt.pt.y):
+            if grid_pt.type == 'point':
+                self.eat_point()
+            if grid_pt.type == 'power':
+                self.eat_power_pill()
+        grid_pt.update()
+
+    def kill_ghost(self, ghost):
+        self.game.score += 500
+        ghost.ghost_reset()
+
+    def eat_point(self):
+        if not self.grid_pt.eaten:
+            self.grid_pt.eaten = True
+            self.game.score += 100
+            print((f'***********{self.game.score}***********'))
     def eat_fruit(self): pass
-    def eat_power_pill(self): pass
+
+    def eat_power_pill(self):
+        if not self.grid_pt.eaten:
+            self.grid_pt.eaten = True
+            self.game.ghostsRunning = True
+            self.game.startGhostRun = pg.time.get_ticks()
+            # for ghost in self.game.ghosts:
+            #     ghost.switch_to_run()
+
+
     def fire_portal_gun(self, color): pass
+
     def update(self):
-        if self.at_dest():   self.draw();  return
+        self.check_item_collision(self.grid_pt_next)
+        if self.at_dest():
+            # if not self.grid_pt.eaten:
+            #     if self.grid_pt.type == 'point':
+            #         self.eat_point()
+            #     elif self.grid_pt.type == 'power':
+            #         self.eat_power_pill()
+            self.draw()
+            return
         self.location_displayed = False
         self.pt += self.scale_factor * self.v
         self.clamp()
@@ -170,7 +217,6 @@ class Pacman(Character):
         self.draw()
 
     def draw(self):
-        angle = self.angle();
         image = self.timer.imagerect()
         image = pg.transform.rotozoom(image, self.angle() + 180, self.scale)
         self.rect = image.get_rect()
@@ -186,16 +232,34 @@ def image_helper(color, direction):
 # class Ghost (base class of all ghosts)
 # ===================================================================================================
 class Ghost(Character):
+    bg1 = pg.image.load('images/bg3.png')
+    bg2 = pg.image.load('images/bg4.png')
+    wg1 = pg.image.load('images/wg3.png')
+    wg2 = pg.image.load('images/wg4.png')
+
+    imagesRunning = [bg1, bg2]
+    imagesFlicker = [bg1, wg1, bg2, wg2]
+
     def __init__(self, game, v, grid_pt, grid_pt_next, timer, name="anonymous ghost"):
         super().__init__(game, v=v, grid_pt=grid_pt, grid_pt_next=grid_pt_next, name=name, scale=1.25, scale_factor=1.0)
         self.timer = timer
-        self.look_down();
+        self.look_down()
         self.rect = self.timer.imagerect().get_rect()
         self.lasttime = pg.time.get_ticks()
         self.last_posn = self.grid_pt
         self.ghosts = None
         self.count_down = 0
         self.change_every = 5
+
+        self.startRunning = None
+        self.running = False
+        self.timerRunning = Timer(Ghost.imagesRunning)
+
+        self.startFlicker = None
+        self.flicker = False
+        self.timerFlicker = Timer(Ghost.imagesFlicker)
+
+
 
     def set_ghosts(self, ghosts): self.ghosts = ghosts
     def look_left(self): self.timer.switch_timer('left')
@@ -208,12 +272,26 @@ class Ghost(Character):
         nextkey = next[thekey]
         self.timer.switch_timer(nextkey)
 
-    def switch_to_chase(self): pass
-    def switch_to_run(self): pass
-    def switch_to_flicker(self): pass
+    # def switch_to_chase(self): pass
+    def switch_to_run(self):
+        self.running = True
+        self.startRunning = pg.time.get_ticks()
+
+
+    def switch_to_flicker(self):
+        self.flicker = True
+        self.startFlicker = pg.time.get_ticks()
+
     def switch_to_idle(self): pass
-    def die(self): pass
+
+    def ghost_reset(self):
+        self.grid_pt = self.game.maze.location(5, 6)
+        self.grid_pt_next = self.game.maze.location(5, 5)
+        self.v = Vector(-1, 0)
+        self.pt = copy(self.grid_pt.pt)
+
     def kill_pacman(self): pass
+
     def turn(self, dir):
         di = {'straight': 0, 'left': pi / 2.0, 'right': -pi / 2.0, 'reverse': pi}
         angle = di[dir]
@@ -238,7 +316,7 @@ class Ghost(Character):
             if finished: break
             self.turn(direction)
             finished = self.choose_next()
-        print(f'{self.name} is turning {direction} at index {self.grid_pt.index} -- next index {self.grid_pt_next.index}')
+        # print(f'{self.name} is turning {direction} at index {self.grid_pt.index} -- next index {self.grid_pt_next.index}')
 
     def in_ghost_house(self):
         idx = self.grid_pt.index
@@ -246,21 +324,25 @@ class Ghost(Character):
 
     def update(self):
         if self.at_dest(): self.calc_next()
-        # print(f'{self.name} at index {self.grid_pt.index}')
-
         self.pt += self.scale_factor * self.v
         self.clamp()
         if self.grid_pt != self.last_posn:
             self.last_posn = self.grid_pt
 
         now = pg.time.get_ticks()
+
         if now - self.lasttime > 3000:
             self.lasttime = now
             self.look_next()
         self.draw()
 
     def draw(self):
-        image = self.timer.imagerect()
+        if self.game.ghostsRunning and not self.game.ghostsFlicker:
+            image = self.timerRunning.imagerect()
+        elif self.game.ghostsFlicker:
+            image = self.timerFlicker.imagerect()
+        else:
+            image = self.timer.imagerect()
         image = pg.transform.rotozoom(image, 0.0, self.scale)
         self.rect = image.get_rect()
         self.rect.centerx, self.rect.centery = self.pt.x + 5, self.pt.y + 5

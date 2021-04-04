@@ -3,19 +3,31 @@ import game_functions as gf
 from settings import Settings
 from maze import Maze, GridPoint
 from character import Pacman, Blinky, Inky, Pinky, Clyde
-
+import os
 
 # ===================================================================================================
 # class Game
 # ===================================================================================================
+# Colors
+white = (255, 255, 255)
+black = (0, 0, 0)
+gray = (50, 50, 50)
+red = (255, 0, 0)
+green = (0, 255, 0)
+blue = (0, 0, 255)
+yellow = (255, 255, 0)
+
+# Game Fonts
+font = "font/Emulogic-zrEw.ttf"
+
 class Game:
     def __init__(self):
         pg.init()
+
         self.settings = Settings()
         self.screen = pg.display.set_mode(size=(self.settings.screen_width, self.settings.screen_height))
-        pg.display.set_caption("PacMan Portal")
-        self.font = pg.font.SysFont(None, 48)
 
+        self.main_menu()
         self.maze = Maze(game=self)
 
         self.pacman = Pacman(game=self)
@@ -23,6 +35,12 @@ class Game:
         for ghost in self.ghosts:
             ghost.set_ghosts(self.ghosts)
         self.finished = False
+
+        self.score = 0
+
+        self.ghostsRunning = False
+        self.startGhostRun = None
+        self.ghostsFlicker = False
 
     def to_grid(self, index):
         row = index // 11
@@ -37,9 +55,78 @@ class Game:
             gf.check_events(game=self)
             # self.screen.fill(self.settings.bg_color)
             self.maze.update()
-            for ghost in self.ghosts: ghost.update()
+            for ghost in self.ghosts:
+                self.pacman.check_ghost_collisions(ghost)
+                ghost.update()
             self.pacman.update()
+            if self.ghostsRunning:
+                self.check_ghost_run()
             pg.display.flip()
+
+    # *****************************
+
+    def check_ghost_run(self):
+        now = pg.time.get_ticks()
+        if now - self.startGhostRun > 12000 and not self.ghostsFlicker:
+            self.ghostsFlicker = True
+
+        if self.ghostsFlicker:
+            if now - self.startGhostRun > 15000:
+                self.ghostsRunning = False
+                self.ghostsFlicker = False
+
+    # Main Menu
+    def main_menu(self):
+        menu = True
+        selected = "start"
+
+        # Text Renderer
+        def text_format(message, textFont, textSize, textColor):
+            newFont = pg.font.Font(textFont, textSize)
+            newText = newFont.render(message, 0, textColor)
+            return newText
+
+        while menu:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    quit()
+                if event.type == pg.KEYDOWN:
+                    if event.key == pg.K_UP:
+                        selected = "start"
+                    elif event.key == pg.K_DOWN:
+                        selected = "quit"
+                    if event.key == pg.K_RETURN:
+                        if selected == "start":
+                            return
+                        if selected == "quit":
+                            pg.quit()
+                            quit()
+
+            # Main Menu UI
+            self.screen.fill(blue)
+            title = text_format("PacMan", font, 65, yellow)
+            if selected == "start":
+                text_start = text_format("START", font, 45, white)
+            else:
+                text_start = text_format("START", font, 45, black)
+            if selected == "quit":
+                text_quit = text_format("QUIT", font, 45, white)
+            else:
+                text_quit = text_format("QUIT", font, 45, black)
+
+            title_rect = title.get_rect()
+            start_rect = text_start.get_rect()
+            quit_rect = text_quit.get_rect()
+
+            # Main Menu Text
+            self.screen.blit(title, (self.settings.screen_width / 2 - (title_rect[2] / 2), 80))
+            self.screen.blit(text_start, (self.settings.screen_width / 2 - (start_rect[2] / 2), 300))
+            self.screen.blit(text_quit, (self.settings.screen_width / 2 - (quit_rect[2] / 2), 360))
+            pg.display.update()
+            # clock.tick(FPS)
+            pg.display.set_caption("PacMan Portal")
+# ***************************************************
 
 
 def main():
@@ -48,4 +135,5 @@ def main():
 
 
 if __name__ == '__main__': main()
+
 
