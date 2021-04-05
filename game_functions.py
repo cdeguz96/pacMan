@@ -23,11 +23,8 @@ def check_keydown_events(event, character):
             if compare(v.dot(new_dir), -1):
                 c.reverse()
             return
-
-        # choose next star for destination
         c.v = di[event.key]
         c.choose_next()
-        # c.v = di[event.key]
         c.scale_factor = c.default_scale_factor
         c.update_angle()
 
@@ -37,11 +34,6 @@ def check_keyup_events(event, character):
     if event.key in li and swapped:
         character.scale_factor = 0
         swapped = False
-    # if event.key == pg.K_q: ship.shooting_bullets = False
-
-# def check_play_button(stats, play_button, mouse_x, mouse_y):
-#     if play_button.rect.collidepoint(mouse_x, mouse_y):
-#         stats.game_active = True
 
 def check_events(game):
     # Watch for keyboard and mouse events.
@@ -49,7 +41,6 @@ def check_events(game):
         if event.type == pg.QUIT: game.finished = True
         elif event.type == pg.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pg.mouse.get_pos()
-            # check_play_button(stats=game.stats, play_button=game.play_button, mouse_x=mouse_x, mouse_y=mouse_y)
         elif event.type == pg.KEYDOWN:
             check_keydown_events(event=event, character=game.pacman)
             # game.pacman.momentum = True

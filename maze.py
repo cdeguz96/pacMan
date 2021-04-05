@@ -107,6 +107,7 @@ class Maze:
         self.image = pg.image.load('images/maze.png')
         self.image = pg.transform.rotozoom(self.image, 0, 0.6)
         self.rect = self.image.get_rect()
+        self.complete = False
 
         self.stars0 = stars0(game=self, row_index=0, y=925)
         self.stars1 = stars1(game=self, row_index=1, y=835)
@@ -126,12 +127,22 @@ class Maze:
     def location(self, row, col): return self.grid[row][col]
 
     def update(self):
+        check = True
         self.draw()
         for stars in self.grid:
             for star in stars:
                 star.update()
+                if not star.eaten:
+                    check = False
+        self.complete = check
 
     def draw(self): self.screen.blit(self.image, self.rect)
+
+    def reset(self):
+        for stars in self.grid:
+            for star in stars:
+                if star.type == 'point' or star.type == 'power':
+                    star.eaten = False
 
 
 class GridPoint:
@@ -141,6 +152,8 @@ class GridPoint:
     image2 = pg.transform.rotozoom(image0, 0, 1.2)
     image3 = pg.transform.rotozoom(image0, 0, 1.3)
     images = [image0, image1, image2, image3, image2, image1]
+
+    imagePP = pg.transform.rotozoom(pg.image.load('images/powerPoint.png'), 0,  .7)
 
     imagen0 = pg.image.load('images/star_next.png')
     imagen0 = pg.transform.rotozoom(imagen0, 0, 0.7)
@@ -178,56 +191,44 @@ class GridPoint:
 
     imagePowerPill = pg.transform.rotozoom(pg.image.load('images/powerPill.png'), 0, .25)
 
-    def __init__(self, game, pt=Vector(70,931), type = None, index=0, adj_list=[]):
+    def __init__(self, game, index, pt=Vector(70,931), type = None, adj_list=[]):
         self.game = game
         self.screen = game.screen
         self.pt = pt
         self.index = index
         self.adj_list = adj_list
-        # self.timer_normal = Timer(GridPoint.images, wait=100)
-        # self.timer_visited = Timer(GridPoint.imagesv, wait=100)
-        # self.timer_next = Timer(GridPoint.imagesn, wait=100)
-        # self.timer_prev = Timer(GridPoint.imagesp, wait=100)
-        # self.timer = self.timer_normal
-        self.timer = Timer(GridPoint.images, wait=100)
-
         self.eaten = False
-        self.portal = False
-        self.timer_portal = Timer(GridPoint.imagePortals, oscillating=True)
 
-        if self.index in [0, 10, 99, 109]: self.type = "power"
-        elif self.index in [55, 65]: self.type = "portal"
-        else: self.type = "point"
+        if self.index in [0, 10, 99, 109]:
+            self.type = "power"
+            self.image = GridPoint.imagePowerPill
+        elif self.index in [55, 65]:
+            self.type = "portal"
+            self.image = GridPoint.imagePortal
+            self.timer = Timer(GridPoint.imagePortals, oscillating=True)
+            self.eaten = True
+        elif self.index in [16, 38, 44, 45, 53, 54, 66, 67, 75, 76, 82, 104]:
+            self.type = "null"
+            self.image = None
+            self.eaten = True
+        else:
+            self.type = "point"
+            self.image = GridPoint.imagePP
 
 
     def update(self): self.draw()
 
-    # def make_next(self): self.timer = self.timer_next
-
-    # def make_prev(self): self.timer = self.timer_prev
-
-    def make_normal(self): pass    #  self.timer = self.timer_normal
-
-    # def make_visited(self):
-    #     self.timer = self.timer_visited
-
     def draw(self):
-        if not self.eaten and self.adj_list:
-            if self.type == "portal":
-                image = self.timer_portal.imagerect()
-                rect = image.get_rect()
-                rect.centerx, rect.centery = self.pt.x, self.pt.y + 7
-                self.screen.blit(image, rect)
-                return
-            elif self.type == "power":
-                image = GridPoint.imagePowerPill
-                rect = image.get_rect()
-                rect.centerx, rect.centery = self.pt.x, self.pt.y
-                self.screen.blit(image, rect)
-                return
-            else:
-                image = self.timer.imagerect()
-                rect = image.get_rect()
-                rect.centerx, rect.centery = self.pt.x, self.pt.y
-                self.screen.blit(image, rect)
-                return
+        if self.type == "portal":
+            surface = self.timer.imagerect()
+            rect = surface.get_rect()
+            rect.centerx, rect.centery = self.pt.x, self.pt.y
+            self.screen.blit(surface, rect)
+            return
+
+        if not self.eaten:
+            rect = self.image.get_rect()
+            rect.centerx, rect.centery = self.pt.x, self.pt.y
+            self.screen.blit(self.image, rect)
+
+

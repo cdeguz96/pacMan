@@ -3,22 +3,15 @@ import game_functions as gf
 from settings import Settings
 from maze import Maze, GridPoint
 from character import Pacman, Blinky, Inky, Pinky, Clyde
-import os
+from game_stats import GameStats
+from tools import font, colors, text_format
+
+# import text
+# import os
 
 # ===================================================================================================
 # class Game
 # ===================================================================================================
-# Colors
-white = (255, 255, 255)
-black = (0, 0, 0)
-gray = (50, 50, 50)
-red = (255, 0, 0)
-green = (0, 255, 0)
-blue = (0, 0, 255)
-yellow = (255, 255, 0)
-
-# Game Fonts
-font = "font/Emulogic-zrEw.ttf"
 
 class Game:
     def __init__(self):
@@ -29,14 +22,14 @@ class Game:
 
         self.main_menu()
         self.maze = Maze(game=self)
+        self.stats = GameStats(self)
 
         self.pacman = Pacman(game=self)
         self.ghosts = [Blinky(game=self), Pinky(game=self), Clyde(game=self), Inky(game=self)]
         for ghost in self.ghosts:
             ghost.set_ghosts(self.ghosts)
         self.finished = False
-
-        self.score = 0
+        # self.score = 0
 
         self.ghostsRunning = False
         self.startGhostRun = None
@@ -55,15 +48,35 @@ class Game:
             gf.check_events(game=self)
             # self.screen.fill(self.settings.bg_color)
             self.maze.update()
+            if self.maze.complete:
+                self.level_up() #send ghost home # level up #reset maze
             for ghost in self.ghosts:
                 self.pacman.check_ghost_collisions(ghost)
                 ghost.update()
             self.pacman.update()
             if self.ghostsRunning:
                 self.check_ghost_run()
+            self.stats.display_stats()
             pg.display.flip()
 
     # *****************************
+
+    def level_up(self):
+        self.stats.level += 1
+        self.maze.reset()
+        for ghost in self.ghosts:
+            ghost.ghost_reset()
+            ghost.scale_factor *= 1.1
+
+        self.pacman.reset()
+        self.pacman.scale_factor *= 1.1
+
+    def start_over(self):
+        self.maze.reset()
+        self.stats.reset_stats()
+        for ghost in self.ghosts:
+            ghost.ghost_reset()
+        self.pacman.reset()
 
     def check_ghost_run(self):
         now = pg.time.get_ticks()
@@ -79,12 +92,6 @@ class Game:
     def main_menu(self):
         menu = True
         selected = "start"
-
-        # Text Renderer
-        def text_format(message, textFont, textSize, textColor):
-            newFont = pg.font.Font(textFont, textSize)
-            newText = newFont.render(message, 0, textColor)
-            return newText
 
         while menu:
             for event in pg.event.get():
@@ -104,16 +111,16 @@ class Game:
                             quit()
 
             # Main Menu UI
-            self.screen.fill(blue)
-            title = text_format("PacMan", font, 65, yellow)
+            self.screen.fill(colors['blue'])
+            title = text_format("PacMan", font, 65, colors['yellow'])
             if selected == "start":
-                text_start = text_format("START", font, 45, white)
+                text_start = text_format("START", font, 45, colors['white'])
             else:
-                text_start = text_format("START", font, 45, black)
+                text_start = text_format("START", font, 45, colors['black'])
             if selected == "quit":
-                text_quit = text_format("QUIT", font, 45, white)
+                text_quit = text_format("QUIT", font, 45, colors['white'])
             else:
-                text_quit = text_format("QUIT", font, 45, black)
+                text_quit = text_format("QUIT", font, 45, colors['black'])
 
             title_rect = title.get_rect()
             start_rect = text_start.get_rect()
